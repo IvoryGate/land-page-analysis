@@ -1,14 +1,17 @@
 import pymysql
+from config import Config
 
 # 数据库配置
 config = {
-    'host': '127.0.0.1',
-    'port': 3306,
-    'user': 'root',
-    'password': 'xxxxxxxxxx',
-    'database': 'landing_page_db',
-    'charset': 'utf8mb4'
+    'host': Config.HOST,
+    'port': Config.PORT,
+    'user': Config.USR,
+    'password': Config.PASSWORD,
+    'database': Config.DATABASE,
+    'charset': Config.CHARSET
 }
+
+print(config)
 
 try:
     # 1. 尝试建立连接
