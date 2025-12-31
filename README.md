@@ -45,7 +45,7 @@ tasks
 | ------------ | ------------ | -------------------------- | -------- | ----------------------------------------------- |
 | id           | INT          | PRIMARY KEY, AUTO_INC      | 否       |                                                 |
 | package_name | VARCHAR(255) | INDEX                      | 否       |                                                 |
-| platform     | VARCHAR(20)  | 'google_play', 'app_store' | 否       |                                                 |
+| platform     | ENUM         | 'google_play', 'app_store' | 否       |                                                 |
 | region       | VARCHAR(10)  | INDEX                      | 否       |                                                 |
 | language     | VARCHAR(10)  | INDEX                      | 否       |                                                 |
 | status       | VARCHAR(20)  | DEFAULT 'pending'          | 否       | 状态: `pending`, `running`, `success`, `failed` |
@@ -57,9 +57,9 @@ tasks
 
 Images
 
-| 字段       | 类型        | 约束/默认值           | 允许为空 | 描述         |
-| ---------- | ----------- | --------------------- | -------- | ------------ |
-| id         | INT         | PRIMARY KEY, AUTO_INC | 否       |              |
-| task_id    | INT         | FOREIGN KEY           | 否       | 关联tasks.id |
-| Image_type | VARCHAR(20) | 'icon', 'other'       | 否       |              |
-| url        | TEXT        |                       | 否       | 图片链接     |
+| 字段       | 类型 | 约束/默认值           | 允许为空 | 描述         |
+| ---------- | ---- | --------------------- | -------- | ------------ |
+| id         | INT  | PRIMARY KEY, AUTO_INC | 否       |              |
+| task_id    | INT  | FOREIGN KEY           | 否       | 关联tasks.id |
+| Image_type | ENUM | 'icon', 'other'       | 否       |              |
+| url        | TEXT |                       | 否       | 图片链接     |
