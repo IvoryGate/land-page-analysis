@@ -14,14 +14,24 @@ def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'lxml')
+
+        icon_tags = soup.find(name = 'img', attrs = {'itemprop': 'image'})
+        if not icon_tags:
+            icon_tags = soup.find_all('img', class_="T75of nm4vBd arM4bb")
+        icon_url = icon_tags.get('src', '')
+
+        img_tags = soup.find_all('img', attrs={'alt': 'Screenshot image'})
+        if not img_tags:
+            img_tags = soup.find_all('img', class_="T75of B5GQxf")
         
-        icon_tags = soup.find_all('img', class_="T75of nm4vBd arM4bb")
-        icon_urls = icon_tags[0]["src"] if icon_tags else ""
+        images: list[str] = []
 
-        img_tags = soup.find_all('img', class_="T75of B5GQxf")
-        images = [tag['src'] for tag in img_tags]
+        for img_tag in img_tags:
+            src_value = img_tag.get('srcset') or img_tag.get('src')
+            images.append(src_value)
 
-        return {"icon": icon_urls, "others": images}
+
+        return {"icon": icon_url, "others": images}
     
     except Exception as e:
         raise Exception(f"GooglePlay解析失败: {str(e)}")
@@ -35,11 +45,13 @@ def parse_apple_store(package_id: str, region: str, lang: str) -> str:
         soup = BeautifulSoup(response.text, 'lxml')
 
         icon_tag = soup.select('div.app-icon-contianer source')
-        icon_urls: str = icon_tag[0]["srcset"].split(" ")[0] if icon_tag else ""
-        
+        icon_url = icon_tag[0]["srcset"].split(" ")[0]
+
         img_tags = soup.select('#product_media_phone_ source')
-        images: list[str] = [tag["srcset"].split(" ")[0] for tag in img_tags]
+        images: list[str] = []
+        for tag in img_tags:
+            images.append(tag["srcset"].split(" ")[0])
         
-        return {"icon": icon_urls, "others": images}
+        return {"icon": icon_url, "others": images}
     except Exception as e:
         raise Exception(f"AppStore解析失败: {str(e)}")
