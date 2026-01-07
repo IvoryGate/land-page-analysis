@@ -14,8 +14,8 @@ class Config:
     CHARSET: str | None = os.getenv("CHARSET")
 
     # --- 爬虫配置信息 ---
-    CRAWLER_MAX_WORKERS: int | None = int(os.getenv("CRAWLER_MAX_WORKERS"))
-    CRAWLER_TIMEOUT: int | None = int(os.getenv("CRAWLER_TIMEOUT"))
+    CRAWLER_MAX_WORKERS: int = int(os.getenv("CRAWLER_MAX_WORKERS"))
+    CRAWLER_TIMEOUT: int = int(os.getenv("CRAWLER_TIMEOUT"))
     
     HEADERS: dict | None = {
         'User-Agent': os.getenv('USER_AGENT')
