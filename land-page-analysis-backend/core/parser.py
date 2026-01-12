@@ -10,7 +10,8 @@ class RequestResult:
 def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
     search_url = Config.GOOGLE_URL.format(package_id, region, lang)
     try:
-        response = requests.get(url=search_url, headers=Config.HEADERS, timeout=Config.CRAWLER_TIMEOUT)
+        current_header = Config.get_random_headers()
+        response = requests.get(url=search_url, headers=current_header, timeout=Config.CRAWLER_TIMEOUT)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'lxml')
@@ -39,7 +40,8 @@ def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
 def parse_apple_store(package_id: str, region: str, lang: str) -> str:
     search_url = Config.APPLE_URL.format(package_id, region, lang)
     try:
-        response = requests.get(url=search_url, headers=Config.HEADERS, timeout=Config.CRAWLER_TIMEOUT)
+        current_header = Config.get_random_headers()
+        response = requests.get(url=search_url, headers=current_header, timeout=Config.CRAWLER_TIMEOUT)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'lxml')

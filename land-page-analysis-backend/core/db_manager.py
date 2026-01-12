@@ -1,4 +1,5 @@
 from config import Config
+from typing import List, Tuple, Optional
 import pymysql
 
 class DBManager(object):
@@ -65,5 +66,37 @@ class DBManager(object):
         except Exception as e:
             print(f"初始化表失败: {e}")
             conn.rollback()
+        finally:
+            conn.close()
+
+    def create_task(self, pkg: str, platform: str, region: str, lang: str) -> int:
+            """创建初始任务，返回自增 ID"""
+            sql = "INSERT INTO tasks (package_name, platform, region, language, status) VALUES (%s, %s, %s, %s, 'pending')"
+            conn = self._get_connection()
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute(sql, (pkg, platform, region, lang))
+                    conn.commit()
+                    return cursor.lastrowid
+            finally:
+                conn.close()
+
+    def add_images(self, task_id: int, image_list: List[Tuple[str, str]]) -> None:
+        sql = "INSERT INTO images (task_id, Image_type, url) VALUES (%s, %s, %s)"
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.executemany(sql, [(task_id, itype, url) for itype, url in image_list])
+                conn.commit()
+        finally:
+            conn.close()
+
+    def update_task_status(self, task_id: int, status: str, error_log: Optional[str] = None) -> None:
+        sql = "UPDATE tasks SET status=%s, erro_log=%s WHERE id=%s"
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (status, error_log, task_id))
+                conn.commit()
         finally:
             conn.close()
