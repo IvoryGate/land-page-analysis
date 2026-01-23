@@ -63,3 +63,48 @@ class CrawlerEngine:
 
     def wait_complete(self):
         self.executor.shutdown(wait=True)
+
+    def run_task_sync(self, task_id: int, platform: str, package: str, region: str, lang: str):
+        """
+        同步执行任务：解析、存入数据库、更新状态
+        返回: (bool, error_message_or_none)
+        """
+        from core.page_parser import parse_google_play, parse_apple_store # 确保路径正确
+
+        try:
+            # 1. 更新状态为正在运行
+            self.db.update_task_status(task_id, 'running')
+
+            # 2. 执行爬取解析
+            if platform == 'google_play':
+                result = parse_google_play(package, region, lang)
+            elif platform == 'apple_store':
+                result = parse_apple_store(package, region, lang)
+            else:
+                raise ValueError(f"Unsupported platform: {platform}")
+
+            if not result:
+                raise Exception("Parser returned empty result")
+
+            # 3. 提取并准备图片数据
+            image_records = []
+            if result.get("icon"):
+                image_records.append(('icon', result["icon"]))
+            
+            for img_url in result.get("others", []):
+                image_records.append(('other', img_url))
+
+            # 4. 写入图片到数据库
+            if image_records:
+                self.db.add_images(task_id, image_records)
+
+            # 5. 更新状态为成功
+            self.db.update_task_status(task_id, 'success')
+            return True, None
+
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[SYNC ERROR] Task {task_id} failed: {error_msg}")
+            # 更新数据库状态为失败
+            self.db.update_task_status(task_id, 'failed', error_log=error_msg)
+            return False, error_msg

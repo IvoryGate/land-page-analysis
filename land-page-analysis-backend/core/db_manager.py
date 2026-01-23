@@ -6,7 +6,6 @@ class DBManager(object):
     def __init__(self) -> None:
         """
         加载数据库配置
-
         """
         self.config = {
             'host': Config.HOST,
@@ -86,16 +85,6 @@ class DBManager(object):
         finally:
             conn.close()
 
-    def update_task_status(self, task_id: int, status: str, error_log: str = ""):
-        sql = "UPDATE tasks SET status=%s, erro_log=%s WHERE id=%s"
-        conn = self._get_connection()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute(sql, (status, error_log, task_id))
-                conn.commit()
-        finally:
-            conn.close()
-
     def create_task(self, package: str, platform: str, region: str, lang: str) -> int:
         clean_platform = platform.strip().lower()
         
@@ -116,6 +105,17 @@ class DBManager(object):
             raise e
         finally:
             conn.close()
+            
+    def update_task_status(self, task_id: int, status: str, error_log: str = ""):
+        sql = "UPDATE tasks SET status=%s, erro_log=%s WHERE id=%s"
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (status, error_log, task_id))
+                conn.commit()
+        finally:
+            conn.close()
+
 
     def add_images(self, task_id: int, image_list: List[Tuple[str, str]]) -> None:
         if not image_list:
@@ -133,5 +133,16 @@ class DBManager(object):
             conn.rollback()
             print(f"[DB ERROR] 批量写入图片失败 (TaskID: {task_id}): {e}")
             raise e
+        finally:
+            conn.close()
+    
+    def get_task_images_list(self, task_id: int) -> List[dict]:
+        """专门为 API 提供的图片获取方法"""
+        sql = "SELECT Image_type as type, url FROM images WHERE task_id = %s"
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(sql, (task_id,))
+                return cursor.fetchall() # 返回 [{'type': 'icon', 'url': '...'}, ...]
         finally:
             conn.close()

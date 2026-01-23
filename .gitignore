@@ -1,3 +1,5 @@
-myvenv/
+.myvenv/
 .env
 __pycache__
+.vscode
+node_modules/
