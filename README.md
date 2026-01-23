@@ -22,7 +22,7 @@
   </p>
 </div>
 
----
+<br />
 
 ## 核心特性
 
@@ -67,7 +67,7 @@
   </table>
 </div>
 
----
+<br />
 
 ## 架构设计
 
@@ -83,8 +83,8 @@ graph LR
     D -- Persist --> C
 ```
 
-## 快速开始
+<br />
 
----
+## 快速开始
 
 <div align="center"> <p>如果您觉得这个项目有帮助，请给一个 ⭐️</p> <p>© 2026 Ivory Gate. Built with ❤️ for Marketing.</p> </div>
