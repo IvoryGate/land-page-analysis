@@ -26,28 +26,30 @@
 
 ## 核心特性
 
-<table width="100%">
-  <tr>
-    <td width="50%" style="border: none; vertical-align: top;">
-      <h3>全球化商店适配</h3>
-      <p>内置 <strong>Region-Language</strong> 联动引擎，支持一键切换国家代码与语言偏好，深度捕获不同文化背景下的本地化商店素材，助力全球市场调研。</p>
-    </td>
-    <td width="50%" style="border: none; vertical-align: top;">
-      <h3>实时同步解析</h3>
-      <p>采用<strong>双重请求架构</strong>：后端实时抓取配合数据库 7 天有效期校验。在保证素材新鲜度的同时，实现秒级响应，告别漫长的异步任务等待。</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" style="border: none; vertical-align: top;">
-      <h3>高保真链接清洗</h3>
-      <p>针对 Google Play 复杂的 <code>srcset</code> 逻辑，系统自动剥离 <code>2x</code>、<code>512w</code> 等冗余描述符，直取 <strong>HD 原图链接</strong>，确保存储的每张素材均为最高清晰度。</p>
-    </td>
-    <td width="50%" style="border: none; vertical-align: top;">
-      <h3>多维可视化对比</h3>
-      <p>基于 Vue3 构建 <strong>Icon-to-Screen</strong> 画廊。支持多包名、多地区的横向排版对比，让应用图标与截图的视觉差异一目了然，提升分析效率。</p>
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <table style="border-collapse: collapse; border: none;">
+    <tr>
+      <td style="border: none; padding: 10px;">
+        <kbd><b> 全球化商店适配 </b></kbd><br>
+        <p align="left">内置 <b>Region-Language</b> 联动引擎，支持一键切换国家代码与语言偏好，深度捕获不同文化背景下的本地化素材，助力全球市场调研。</p>
+      </td>
+      <td style="border: none; padding: 10px;">
+        <kbd><b> 实时同步解析 </b></kbd><br>
+        <p align="left">采用<b>双重请求架构</b>：后端实时抓取配合数据库 7 天有效期校验。在保证素材新鲜度的同时实现秒级响应，告别漫长任务等待。</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="border: none; padding: 10px;">
+        <kbd><b> 高保真链接清洗 </b></kbd><br>
+        <p align="left">针对 Google Play 复杂的 <code>srcset</code> 逻辑，系统自动剥离 <code>2x</code> 等冗余描述符，直取 <b>HD 原图链接</b>，确保存储素材均为最高清晰度。</p>
+      </td>
+      <td style="border: none; padding: 10px;">
+        <kbd><b> 多维可视化对比 </b></kbd><br>
+        <p align="left">基于 Vue3 构建 <b>Icon-to-Screen</b> 画廊。支持多包名多地区横向对比，让图标与截图的视觉差异一目了然，提升分析效率。</p>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
