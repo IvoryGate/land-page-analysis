@@ -1,26 +1,27 @@
 import time
-from core import CrawlerEngine
+from core import app
 
-def main():
+# def main():
 
-    engine = CrawlerEngine(max_workers=3)
+#     engine = CrawlerEngine(max_workers=3)
     
-    # 准备测试数据 (包名, 平台, 国家, 语言)
-    test_tasks = [
-        ("com.facebook.orca", "google_play", "us", "en"),
-        ("6745133405", "apple_store", "us", "en"),
-        ("com.instagram.android", "google_play", "us", "en"),
-        ("6739490118", "apple_store", "us", "en")
-    ]
+#     # 准备测试数据 (包名, 平台, 国家, 语言)
+#     test_tasks = [
+#         ("com.facebook.orca", "google_play", "us", "en"),
+#         ("6745133405", "apple_store", "us", "en"),
+#         ("com.instagram.android", "google_play", "us", "en"),
+#         ("6739490118", "apple_store", "us", "en")
+#     ]
 
-    print(f"--- 开始分发 {len(test_tasks)} 个爬取任务 ---")
+#     print(f"--- 开始分发 {len(test_tasks)} 个爬取任务 ---")
 
-    for package, platform, region, lang in test_tasks:
-        try:
-            task_id = engine.add_job(platform, package, region, lang)
-            print(f"[SUBMIT] 任务已提交: ID={task_id}, package={package}")
-        except Exception as e:
-            print(f"[SUBMIT ERROR] 提交 {package} 失败: {e}")
+#     for package, platform, region, lang in test_tasks:
+#         try:
+#             task_id = engine.add_job(platform, package, region, lang)
+#             print(f"[SUBMIT] 任务已提交: ID={task_id}, package={package}")
+#         except Exception as e:
+#             print(f"[SUBMIT ERROR] 提交 {package} 失败: {e}")
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    # 运行在 5000 端口
+    app.run(host='0.0.0.0', port=5050, debug=True)

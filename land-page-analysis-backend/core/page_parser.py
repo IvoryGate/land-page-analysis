@@ -7,7 +7,7 @@ class RequestResult:
     icon: str
     others: list[str]
 
-def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
+def parse_google_play(package_id: str, region: str, lang: str):
     search_url = Config.GOOGLE_URL.format(package_id, region, lang)
     try:
         current_header = Config.get_random_headers()
@@ -16,11 +16,17 @@ def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
 
         soup = BeautifulSoup(response.text, 'lxml')
 
-        icon_tags = soup.find(name = 'img', attrs = {'itemprop': 'image'})
+        # 1. 提取 Icon
+        icon_tags = soup.find(name='img', attrs={'itemprop': 'image'})
         if not icon_tags:
-            icon_tags = soup.find_all('img', class_="T75of nm4vBd arM4bb")
-        icon_url = icon_tags.get('src', '')
+            icon_tags = soup.find('img', class_="T75of nm4vBd arM4bb")
+        
+        icon_url = ""
+        if icon_tags:
+            raw_icon = icon_tags.get('srcset') or icon_tags.get('src', '')
+            icon_url = raw_icon.split(' ')[0] 
 
+        # 2. 提取 截图
         img_tags = soup.find_all('img', attrs={'alt': 'Screenshot image'})
         if not img_tags:
             img_tags = soup.find_all('img', class_="T75of B5GQxf")
@@ -29,8 +35,13 @@ def parse_google_play(package_id: str, region: str, lang: str) -> RequestResult:
 
         for img_tag in img_tags:
             src_value = img_tag.get('srcset') or img_tag.get('src')
-            images.append(src_value)
-
+            if src_value:
+                clean_url = src_value.split(' ')[0]
+                
+                if '=' in clean_url:
+                    clean_url = clean_url.split('=')[0]
+                
+                images.append(clean_url)
 
         return {"icon": icon_url, "others": images}
     
