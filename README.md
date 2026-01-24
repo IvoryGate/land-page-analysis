@@ -31,7 +31,7 @@
     <tr>
       <td width="50%" style="border-right: 1px solid #e1e4e8; border-bottom: 1px solid #e1e4e8; padding: 30px; vertical-align: top;">
         <div align="left">
-          <p><b>🌍 全球化商店适配</b></p>
+          <p><b>全球化商店适配</b></p>
           <p style="font-size: 13.5px; line-height: 1.6; color: #586069;">
             内置 <b>Region-Language</b> 联动引擎，支持一键切换国家代码与语言偏好，深度捕获不同文化背景下的本地化素材，有效助力全球市场调研。
           </p>
@@ -39,7 +39,7 @@
       </td>
       <td width="50%" style="border-bottom: 1px solid #e1e4e8; padding: 30px; vertical-align: top;">
         <div align="left">
-          <p><b>⚡ 实时同步解析</b></p>
+          <p><b>实时同步解析</b></p>
           <p style="font-size: 13.5px; line-height: 1.6; color: #586069;">
             采用<b>双重请求架构</b>：后端实时抓取配合数据库 7 天有效期校验。在保证素材新鲜度的同时实现秒级响应，彻底告别漫长的异步任务等待。
           </p>
@@ -49,7 +49,7 @@
     <tr>
       <td width="50%" style="border-right: 1px solid #e1e4e8; padding: 30px; vertical-align: top;">
         <div align="left">
-          <p><b>🧹 高保真链接清洗</b></p>
+          <p><b>高保真链接清洗</b></p>
           <p style="font-size: 13.5px; line-height: 1.6; color: #586069;">
             针对 Google Play 复杂的 <code>srcset</code> 逻辑，系统自动剥离 <code>2x</code> 等冗余描述符，直取 <b>HD 原图链接</b>，确保存储素材均为最高清晰度。
           </p>
@@ -57,7 +57,7 @@
       </td>
       <td width="50%" style="padding: 30px; vertical-align: top;">
         <div align="left">
-          <p><b>🖼️ 多维可视化对比</b></p>
+          <p><b>多维可视化对比</b></p>
           <p style="font-size: 13.5px; line-height: 1.6; color: #586069;">
             基于 Vue3 构建 <b>Icon-to-Screen</b> 画廊。支持多包名多地区横向对比，让图标与截图的视觉差异一目了然，从交互层面大幅提升分析效率。
           </p>
@@ -86,5 +86,13 @@ graph LR
 <br />
 
 ## 快速开始
+
+- 克隆项目
+- 部署环境
+- 启动数据库
+- 启动后端服务器
+- 启动前端
+
+---
 
 <div align="center"> <p>如果您觉得这个项目有帮助，请给一个 ⭐️</p> <p>© 2026 Ivory Gate. Built with ❤️ for Marketing.</p> </div>
