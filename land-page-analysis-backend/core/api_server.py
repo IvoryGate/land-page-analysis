@@ -5,7 +5,7 @@ from core import DBManager
 from config import Config
 
 app = Flask(__name__)
-CORS(app)  # 允许跨域，方便后续前端对接
+CORS(app)
 
 # 全局初始化引擎和数据库管理
 db = DBManager()
@@ -41,10 +41,9 @@ def add_crawl_task():
         new_task_id = db.create_task(pkg, platform, region, lang)
         
         # Step 3: 同步爬取并入库
-        success, error_info = engine.run_task_sync(new_task_id, platform, pkg, region, lang)
+        success, error_info = engine._task_handling(new_task_id, platform, pkg, region, lang)
         
         if success:
-            # Step 4: 爬完后再次从库里读结果，确保数据完整性
             images = db.get_task_images_list(new_task_id)
             return jsonify({
                 "status": "success",

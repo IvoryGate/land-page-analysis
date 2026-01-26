@@ -36,10 +36,10 @@ class Config:
     ]
 
     # --- Google Play Url 配置 ---
-    GOOGLE_URL: str | None = os.getenv("GOOGLE_URL")
+    GOOGLE_URL: str = str(os.getenv("GOOGLE_URL"))
 
     # --- Apple Store Url 配置 ---
-    APPLE_URL: str | None = os.getenv("APPLE_URL")
+    APPLE_URL: str = str(os.getenv("APPLE_URL"))
 
     @classmethod
     def get_random_headers(cls) -> dict[str, str]:

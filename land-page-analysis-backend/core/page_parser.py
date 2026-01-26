@@ -7,7 +7,7 @@ class RequestResult:
     icon: str
     others: list[str]
 
-def parse_google_play(package_id: str, region: str, lang: str):
+def parse_google_play(package_id: str, region: str, lang: str) -> dict:
     search_url = Config.GOOGLE_URL.format(package_id, region, lang)
     try:
         current_header = Config.get_random_headers()
@@ -23,7 +23,7 @@ def parse_google_play(package_id: str, region: str, lang: str):
         
         icon_url = ""
         if icon_tags:
-            raw_icon = icon_tags.get('srcset') or icon_tags.get('src', '')
+            raw_icon: str = str(icon_tags.get('srcset') or icon_tags.get('src', ''))
             icon_url = raw_icon.split(' ')[0] 
 
         # 2. 提取 截图
@@ -34,7 +34,7 @@ def parse_google_play(package_id: str, region: str, lang: str):
         images: list[str] = []
 
         for img_tag in img_tags:
-            src_value = img_tag.get('srcset') or img_tag.get('src')
+            src_value: str = str(img_tag.get('srcset') or img_tag.get('src'))
             if src_value:
                 clean_url = src_value.split(' ')[0]
                 
@@ -48,7 +48,7 @@ def parse_google_play(package_id: str, region: str, lang: str):
     except Exception as e:
         raise Exception(f"GooglePlay解析失败: {str(e)}")
 
-def parse_apple_store(package_id: str, region: str, lang: str) -> str:
+def parse_apple_store(package_id: str, region: str, lang: str) -> dict:
     search_url = Config.APPLE_URL.format(package_id, region, lang)
     try:
         current_header = Config.get_random_headers()

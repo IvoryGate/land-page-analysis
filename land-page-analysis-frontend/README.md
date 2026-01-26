@@ -1,5 +1,19 @@
-# Vue 3 + Vite
+# 前端界面设计
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 功能
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+增删改查
+
+- 增
+  - 逐条添加：手动选择平台，包名，国家，语言
+  - 批量添加：以csv文件上传添加条目（包名，国家，语言）
+  - 添加某包名的全部（国家和语言互相匹配）
+- 删
+  - 逐条删除：检索出来后手动删除
+  - 批量删除：以csv文件上传删除条目（（包名，国家，语言）
+  - 添加某包名的全部（国家和语言互相匹配）
+- 改
+  - 手动重新发起爬虫请求（在不手动的情况下，七天后过期）
+- 查
+  - 单条查询（可不断添加）
+  - 查询某包名的全部
