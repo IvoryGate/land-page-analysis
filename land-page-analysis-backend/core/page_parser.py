@@ -16,7 +16,6 @@ def parse_google_play(package_id: str, region: str, lang: str) -> dict:
 
         soup = BeautifulSoup(response.text, 'lxml')
 
-        # 1. 提取 Icon
         icon_tags = soup.find(name='img', attrs={'itemprop': 'image'})
         if not icon_tags:
             icon_tags = soup.find('img', class_="T75of nm4vBd arM4bb")
@@ -26,7 +25,6 @@ def parse_google_play(package_id: str, region: str, lang: str) -> dict:
             raw_icon: str = str(icon_tags.get('srcset') or icon_tags.get('src', ''))
             icon_url = raw_icon.split(' ')[0] 
 
-        # 2. 提取 截图
         img_tags = soup.find_all('img', attrs={'alt': 'Screenshot image'})
         if not img_tags:
             img_tags = soup.find_all('img', class_="T75of B5GQxf")

@@ -116,7 +116,6 @@ class DBManager(object):
         finally:
             conn.close()
 
-
     def add_images(self, task_id: int, image_list: List[Tuple[str, str]]) -> None:
         if not image_list:
             return
