@@ -7,6 +7,8 @@ class TaskService:
         self.db = DBManager()
         self.engine = CrawlerEngine()
         
-    @classmethod
-    def get_single_record(cls, package: str, platform: str, region: str, lang: str):
-        pass
+    def get_single_record(self, package: str, platform: str, region: str, lang: str) -> tuple:
+        
+        images = []
+        task_id = 0
+        return (images, task_id)
