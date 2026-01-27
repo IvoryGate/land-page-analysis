@@ -12,20 +12,18 @@ db = DBManager()
 engine = CrawlerEngine()
 
 @app.route('/api/crawl', methods=['POST'])
-@app.route('/api/crawl', methods=['POST'])
 def add_crawl_task():
     data = request.json
-    pkg = data.get('package')
+    package = data.get('package')
     platform = data.get('platform')
     region = data.get('region', 'us').lower()
     lang = data.get('lang', 'en').lower()
 
-    if not pkg or not platform:
+    if not package or not platform:
         return jsonify({"error": "Missing package or platform"}), 400
 
     try:
-        # Step 1: 查重 (7天内有效记录)
-        existing_id = db.check_task_valid(pkg, platform, region, lang)
+        existing_id = db.check_task_valid(package, platform, region, lang)
         if existing_id:
             print(f"[*] 命中缓存: {existing_id}")
             images = db.get_task_images_list(existing_id)
@@ -36,12 +34,9 @@ def add_crawl_task():
                 "from_cache": True
             }), 200
 
-        # Step 2: 创建新记录
-        # 注意: 这里的 create_task 必须先执行并 commit，返回自增 ID
-        new_task_id = db.create_task(pkg, platform, region, lang)
+        new_task_id = db.create_task(package, platform, region, lang)
         
-        # Step 3: 同步爬取并入库
-        success, error_info = engine._task_handling(new_task_id, platform, pkg, region, lang)
+        success, error_info = engine._task_handling(new_task_id, platform, package, region, lang)
         
         if success:
             images = db.get_task_images_list(new_task_id)
