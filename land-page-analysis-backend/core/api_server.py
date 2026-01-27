@@ -1,15 +1,26 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from core.crawler_engine import CrawlerEngine
-from core import DBManager
-from config import Config
+from core.task_service import TaskService
 
 app = Flask(__name__)
 CORS(app)
 
-# 全局初始化引擎和数据库管理
-db = DBManager()
-engine = CrawlerEngine()
+task_service = TaskService()
+
+@app.route('/api/test', methods=['POST'])
+def crawl_test():
+    package = request.json.get('package')
+    platform = request.json.get('platform')
+    region = request.json.get('region', 'us').lower()
+    lang = request.json.get('lang', 'en').lower()
+    return jsonify({
+        "status" : "success",
+        "package": package,
+        "platform": platform,
+        "region": region,
+        "lang": lang,
+        "message": f"receive successfully"
+    })
 
 @app.route('/api/crawl', methods=['POST'])
 def add_crawl_task():
