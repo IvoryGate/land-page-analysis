@@ -35,7 +35,7 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="submit">查询</el-button>
+              <el-button type="primary" @click="fetchSingleRecord" :loading="submitting">查询</el-button>
             </el-form-item>
           </el-form>
         </el-card>
@@ -49,10 +49,13 @@
 
 <script setup>
 import { Monitor } from '@element-plus/icons-vue';
+import axios from 'axios';
 import { ref, reactive } from 'vue'
 
 // ---- 状态变量 -----
 const viewMode = ref('task_board')
+const submitting = ref(false)
+const tasksList = ref([])
 
 const form = reactive({ package: '', platform: 'google_play', region: 'us', lang: 'en' })
 
@@ -73,14 +76,25 @@ const autoChoosePlatform = (value) => {
   console.log(`change platform to ${form.platform}`)
 }
 
-// 
+// 切换国家
 const handleRegionChange = (value) => {
   form.region = value
   console.log(`current region is ${form.region}`)
 }
 
 // 提交请求
-const submit = () => {
+const fetchSingleRecord = async () => {
+  if (!form.package) return ElMessage.warning('包名缺失')
+  submitting.value = true
+  try {
+    const { data } = await axios.post('/api/get', { ...form })
+    tasksList.value = data
+    console.log(tasksList.value)
+  } catch (error) {
+    console.warn("check POST /api/get interface")
+  } finally {
+
+  }
   console.log("提交")
 }
 
