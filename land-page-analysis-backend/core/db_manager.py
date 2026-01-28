@@ -200,6 +200,6 @@ class DBManager(object):
         try:
             with conn.cursor() as cursor:
                 cursor.execute(sql, (task_id,))
-                return cursor.fetchall() # 返回 [{'type': 'icon', 'url': '...'}, ...]
+                return cursor.fetchall()
         finally:
             conn.close()

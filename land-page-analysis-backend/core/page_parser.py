@@ -2,7 +2,6 @@ from config import Config
 from bs4 import BeautifulSoup
 import requests
 
-
 class RequestResult:
     icon: str
     others: list[str]
