@@ -35,7 +35,6 @@
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="submitTask(false)" :loading="submitting">查询</el-button>
-              <el-button type="success" plain @click="submitTask(true)" :loading="submitting">全地区添加</el-button>
               <el-button @click="fetchTasks">刷新列表</el-button>
             </el-form-item>
           </el-form>
@@ -47,8 +46,8 @@
               <div class="app-info">
                 <span class="pkg-name">{{ scope.row.package_name }}</span>
                 <div class="tags">
-                  <el-tag size="middle" effect="dark">{{ scope.row.platform }}</el-tag>
-                  <el-tag size="middle" type="info" style="margin-left: 5px">{{ scope.row.region.toUpperCase() }}</el-tag>
+                  <el-tag size="default" effect="dark">{{ scope.row.platform }}</el-tag>
+                  <el-tag size="default" type="info" style="margin-left: 5px">{{ scope.row.region.toUpperCase() }}</el-tag>
                 </div>
               </div>
             </template>
@@ -272,7 +271,6 @@ const handleRegionChange = (val) => {
 // 处理 CSV 略 (与之前逻辑一致，仅需注意调用 API 的参数)
 const handleCSV = (file, mode) => { /* ... */ }
 
-onMounted(fetchTasks)
 </script>
 
 <style scoped>
