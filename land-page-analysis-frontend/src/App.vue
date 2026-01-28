@@ -3,273 +3,298 @@
     <el-header class="header">
       <div class="brand">
         <el-icon><Monitor /></el-icon>
-        <span>App Landing Page Analyzer</span>
+        <span>Landing Page Analyser</span>
       </div>
       
-      <div class="search-section">
-        <el-input
-          v-model="form.package"
-          placeholder="请输入应用包名 (如: com.instagram.android)"
-          class="package-input"
-        >
-          <template #prepend>
-            <el-select v-model="form.platform" style="width: 120px">
-              <el-option label="Google Play" value="google_play" />
-              <el-option label="App Store" value="apple_store" />
-            </el-select>
-          </template>
-        </el-input>
-
-        <el-select v-model="form.region" @change="handleRegionChange" style="width: 100px; margin: 0 10px">
-          <el-option v-for="r in regionOptions" :key="r.value" :label="r.label" :value="r.value" />
-        </el-select>
-
-        <el-button type="primary" :loading="submitting" @click="submitTask">
-          开始抓取
-        </el-button>
+      <div class="header-actions">
+        <el-radio-group v-model="viewMode" size="large">
+          <el-radio-button value="list">任务看板</el-radio-button>
+          <el-radio-button value="compare">地区对比</el-radio-button>
+          <el-radio-button value="batch">批量管理</el-radio-button>
+        </el-radio-group>
       </div>
     </el-header>
 
     <el-main>
-      <el-card shadow="never">
-        <template #header>
-          <div class="card-header">
-            <span>分析记录 (近 7 天)</span>
-            <el-button size="small" @click="fetchTasks">手动刷新</el-button>
-          </div>
-        </template>
+      <div v-if="viewMode === 'list'">
+        <el-card shadow="never" class="search-card">
+          <el-form :inline="true" :model="form">
+            <el-form-item label="包名">
+              <el-input v-model="form.package" placeholder="com.example.app / 6636468266" style="width: 280px" />
+            </el-form-item>
+            <el-form-item label="平台">
+              <el-select v-model="form.platform" style="width: 140px">
+                <el-option label="Google Play" value="google_play" />
+                <el-option label="App Store" value="apple_store" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="地区">
+              <el-select v-model="form.region" @change="handleRegionChange" style="width: 130px">
+                <el-option v-for="r in regionOptions" :key="r.value" :label="r.label" :value="r.value" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="submitTask(false)" :loading="submitting">查询</el-button>
+              <el-button type="success" plain @click="submitTask(true)" :loading="submitting">全地区添加</el-button>
+              <el-button @click="fetchTasks">刷新列表</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
 
-        <el-table :data="tasks" v-loading="loading" style="width: 100%" border>
-          <el-table-column label="应用详情" width="220">
+        <el-table :data="tasks" v-loading="loading" border class="main-table">
+          <el-table-column label="应用详情" width="240">
             <template #default="scope">
               <div class="app-info">
                 <span class="pkg-name">{{ scope.row.package_name }}</span>
                 <div class="tags">
-                  <el-tag size="small" :type="scope.row.platform === 'google_play' ? 'success' : 'primary'">
-                    {{ scope.row.platform }}
-                  </el-tag>
-                  <el-tag size="small" effect="dark" type="info">
-                    {{ scope.row.region.toUpperCase() }} / {{ scope.row.language }}
-                  </el-tag>
+                  <el-tag size="middle" effect="dark">{{ scope.row.platform }}</el-tag>
+                  <el-tag size="middle" type="info" style="margin-left: 5px">{{ scope.row.region.toUpperCase() }}</el-tag>
                 </div>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column label="素材资源 (Icon + 截图)">
+          <el-table-column label="素材预览">
             <template #default="scope">
-              <div v-if="scope.row.status === 'success'" class="media-container">
-                <div v-if="imageData[scope.row.id]?.icon" class="media-item icon-wrapper">
+              <div v-if="imageData[scope.row.id]" class="media-container">
+                <el-image 
+                  v-if="imageData[scope.row.id].icon"
+                  :src="imageData[scope.row.id].icon" 
+                  class="img-icon"
+                  fit="cover"
+                  :preview-src-list="[imageData[scope.row.id].icon]"
+                  preview-teleported
+                />
+                <div class="screenshot-strip">
                   <el-image 
-                    :src="imageData[scope.row.id].icon" 
-                    :preview-src-list="[imageData[scope.row.id].icon]"
-                    fit="cover"
-                    class="img-icon"
-                  />
-                  <span class="img-label">Icon</span>
-                </div>
-                
-                <div 
-                  v-for="(url, index) in imageData[scope.row.id]?.others" 
-                  :key="index" 
-                  class="media-item screenshot-wrapper"
-                >
-                  <el-image 
+                    v-for="(url, index) in imageData[scope.row.id].others" 
+                    :key="index" 
                     :src="url" 
+                    class="img-screenshot"
+                    fit="cover"
+                    lazy
                     :preview-src-list="imageData[scope.row.id].others"
                     :initial-index="index"
-                    lazy
-                    fit="cover"
-                    class="img-screenshot"
+                    preview-teleported
                   />
                 </div>
               </div>
-
-              <div v-else-if="scope.row.status === 'failed'" class="status-error">
-                <el-alert :title="scope.row.erro_log || '抓取过程发生异常'" type="error" :closable="false" show-icon />
+              <div v-else-if="scope.row.status === 'running'">
+                <el-text type="primary"><el-icon class="is-loading"><Loading /></el-icon> 正在实时分析抓取中...</el-text>
               </div>
-              <div v-else class="status-loading">
-                <el-progress :percentage="50" indeterminate :format="() => '正在努力抓取资源...'" />
+              <div v-else>
+                <el-text type="info">无数据或等待抓取 ({{ scope.row.status }})</el-text>
               </div>
             </template>
           </el-table-column>
 
-          <el-table-column prop="status" label="状态" width="100" align="center">
+          <el-table-column label="操作" width="120" align="center">
             <template #default="scope">
-              <el-tag :type="statusTypeMap[scope.row.status]">{{ scope.row.status }}</el-tag>
+              <el-button type="danger" size="small" :icon="Delete" circle @click="handleDelete(scope.row.id)" />
             </template>
           </el-table-column>
-
-          <el-table-column prop="update_at" label="时间" width="160" align="center" />
         </el-table>
-      </el-card>
+      </div>
+
+      <div v-if="viewMode === 'compare'">
+        <el-card shadow="never">
+          <template #header>
+            <el-input v-model="comparePkg" placeholder="输入包名对比多地区素材" style="width: 450px">
+              <template #append><el-button @click="runCompare">开始对比</el-button></template>
+            </el-input>
+          </template>
+          <div class="compare-grid" v-if="compareResults.length">
+            <div v-for="item in compareResults" :key="item.id" class="compare-column">
+              <div class="column-title">{{ item.region.toUpperCase() }}</div>
+              <div class="column-content" v-if="imageData[item.id]">
+                <el-image :src="imageData[item.id].icon" class="compare-icon" />
+                <el-divider>预览</el-divider>
+                <el-image 
+                  v-for="img in imageData[item.id].others.slice(0, 3)" 
+                  :key="img" :src="img" 
+                  class="compare-ss" 
+                  fit="contain" 
+                />
+              </div>
+            </div>
+          </div>
+          <el-empty v-else description="请输入包名进行对比" />
+        </el-card>
+      </div>
+
+      <div v-if="viewMode === 'batch'">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-card shadow="never" header="批量添加任务">
+              <el-upload drag action="#" :auto-upload="false" :on-change="(file) => handleCSV(file, 'add')">
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">拖拽 CSV 文件上传</div>
+              </el-upload>
+            </el-card>
+          </el-col>
+          <el-col :span="12">
+            <el-card shadow="never" header="批量删除记录">
+              <el-upload drag action="#" :auto-upload="false" :on-change="(file) => handleCSV(file, 'delete')">
+                <el-icon class="el-icon--upload" style="color: #f56c6c"><DeleteFilled /></el-icon>
+                <div class="el-upload__text">拖拽 CSV 文件批量删除</div>
+              </el-upload>
+            </el-card>
+          </el-col>
+        </el-row>
+      </div>
     </el-main>
   </el-container>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { Monitor } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { Monitor, Delete, Loading, UploadFilled, DeleteFilled } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import axios from 'axios'
 
-// 1. 基础配置与表单数据
-const API_BASE = "/api" // 依赖 vite.config.js 的 proxy
+// --- 状态定义 ---
+const viewMode = ref('list')
 const loading = ref(false)
 const submitting = ref(false)
 const tasks = ref([])
-const imageData = reactive({}) // 存储格式 { taskId: { icon: '', others: [] } }
+const compareResults = ref([])
+const comparePkg = ref('')
+const imageData = reactive({}) // 存储格式：{ taskId: { icon: '', others: [] } }
 
 const regionOptions = [
   { label: '美国 (US)', value: 'us', lang: 'en' },
   { label: '中国 (CN)', value: 'cn', lang: 'zh' },
   { label: '日本 (JP)', value: 'jp', lang: 'ja' },
-  { label: '韩国 (KR)', value: 'kr', lang: 'ko' },
-  { label: '台湾 (TW)', value: 'tw', lang: 'zh-tw' }
+  { label: '韩国 (KR)', value: 'kr', lang: 'ko' }
 ]
 
-const form = reactive({
-  package: '',
-  platform: 'google_play',
-  region: 'us',
-  lang: 'en'
-})
+const form = reactive({ package: '', platform: 'google_play', region: 'us', lang: 'en' })
 
-const statusTypeMap = {
-  success: 'success',
-  running: 'warning',
-  failed: 'danger',
-  pending: 'info'
+// --- 核心逻辑 ---
+
+// 1. 提交任务（单条分析 / 全地区添加）
+const submitTask = async (allRegions = false) => {
+  if (!form.package) return ElMessage.warning('请输入包名')
+  submitting.value = true
+  
+  try {
+    if (allRegions) {
+      for (const opt of regionOptions) {
+        const res = await axios.post('/api/get', { ...form, region: opt.value, lang: opt.lang })
+        console.log(res.data)
+        handleSingleResponse(res.data, { ...form, region: opt.value })
+      }
+      ElMessage.success('全地区任务已添加')
+    } else {
+      const { data } = await axios.post('/api/get', form)
+      handleSingleResponse(data, form)
+      ElMessage.success('分析完成')
+    }
+  } catch (error) {
+    ElMessage.error('请求失败，请检查后端 API')
+  } finally {
+    submitting.value = false
+  }
 }
 
-// 2. 地区语言联动
-const handleRegionChange = (val) => {
-  const opt = regionOptions.find(o => o.value === val)
-  if (opt) form.lang = opt.lang
+// 2. 处理 API 返回的数据并渲染
+const handleSingleResponse = (data, originForm) => {
+  const taskId = data.task_id
+  
+  // 解析后端 images 结构 (后端返回 type: "icon" / "other")
+  imageData[taskId] = {
+    icon: data.images.find(i => i.type === 'icon')?.url,
+    others: data.images.filter(i => i.type === 'other').map(i => i.url)
+  }
+
+  // 构造展示用的任务对象
+  const taskEntry = {
+    id: taskId,
+    package_name: originForm.package,
+    platform: originForm.platform,
+    region: originForm.region,
+    status: data.status
+  }
+
+  // 如果列表中已有该任务，则更新；否则插入到首行
+  const idx = tasks.value.findIndex(t => t.id === taskId)
+  if (idx !== -1) {
+    tasks.value[idx] = taskEntry
+  } else {
+    tasks.value.unshift(taskEntry)
+  }
 }
 
-// 3. 获取任务列表
+// 3. 获取任务列表 (假设后端有对应的 GET 接口)
 const fetchTasks = async () => {
   loading.value = true
   try {
-    const { data } = await axios.get(`${API_BASE}/tasks`)
+    const { data } = await axios.get('/api/get') 
+    // 注意：如果列表接口不带 images 详情，你可能需要循环请求或后端支持 JOIN
     tasks.value = data
-    // 对成功的任务并行加载图片详情
-    tasks.value.forEach(task => {
-      if (task.status === 'success' && !imageData[task.id]) {
-        loadTaskImages(task.id)
-      }
-    })
-  } catch (err) {
-    ElMessage.error('获取列表失败，请检查后端服务')
+  } catch (e) {
+    console.warn('获取列表失败，请确保 GET /api/get 接口可用')
   } finally {
     loading.value = false
   }
 }
 
-// 4. 加载特定任务的图片详情
-const loadTaskImages = async (taskId) => {
-  try {
-    const { data } = await axios.get(`${API_BASE}/task/${taskId}/images`)
-    const imgs = data.images || []
-    imageData[taskId] = {
-      icon: imgs.find(i => i.Image_type === 'icon')?.url,
-      others: imgs.filter(i => i.Image_type === 'other').map(i => i.url)
+const handleDelete = (id) => {
+  ElMessageBox.confirm('确定删除该记录吗？').then(async () => {
+    // 假设后端有 DELETE 接口
+    await axios.delete(`/api/task/${id}`)
+    tasks.value = tasks.value.filter(t => t.id !== id)
+    delete imageData[id]
+    ElMessage.success('已删除')
+  })
+}
+
+const runCompare = async () => {
+  if (!comparePkg.value) return
+  const { data } = await axios.get(`/api/get?package=${comparePkg.value}`)
+  compareResults.value = data
+  // 对比视图也需要加载图片
+  data.forEach(item => {
+    if (item.images) {
+        imageData[item.id] = {
+            icon: item.images.find(i => i.type === 'icon')?.url,
+            others: item.images.filter(i => i.type === 'other').map(i => i.url)
+        }
     }
-  } catch (err) {
-    console.error(`ID:${taskId} 图片加载失败`)
-  }
+  })
 }
 
-// 5. 提交抓取任务
-const submitTask = async () => {
-  submitting.value = true;
-  try {
-    const res = await axios.post('/api/crawl', form);
-    // 此时 res.data 已经直接包含了 images 数组
-    const { task_id, images } = res.data;
-    
-    // 立即更新前端本地数据，无需等待轮询
-    imageData[task_id] = {
-      icon: images.find(i => i.type === 'icon')?.url,
-      others: images.filter(i => i.type === 'other').map(i => i.url)
-    };
-    
-    await fetchTasks(); // 刷新下方的历史列表
-    ElMessage.success('抓取成功');
-  } catch (err) {
-    ElMessage.error('抓取失败');
-  } finally {
-    submitting.value = false;
-  }
+const handleRegionChange = (val) => {
+  const opt = regionOptions.find(o => o.value === val)
+  if (opt) form.lang = opt.lang
 }
 
+// 处理 CSV 略 (与之前逻辑一致，仅需注意调用 API 的参数)
+const handleCSV = (file, mode) => { /* ... */ }
 
-onMounted(() => {
-  fetchTasks()
-  // 每 10 秒自动刷新一次，追踪 running 状态
-  setInterval(fetchTasks, 10000)
-})
+onMounted(fetchTasks)
 </script>
 
 <style scoped>
-.main-layout { background: #f5f7fa; min-height: 100vh; }
+.main-layout { background: #f0f2f5; min-height: 100vh; }
+.header { background: #fff; border-bottom: 1px solid #dcdfe6; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; }
+.brand { display: flex; align-items: center; gap: 10px; color: #409eff; font-weight: bold; font-size: 1.2rem; }
 
-.header {
-  background: #fff;
-  border-bottom: 1px solid #e6e6e6;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+.search-card { margin-bottom: 20px; }
+.main-table { background: #fff; }
 
-.brand { display: flex; align-items: center; gap: 10px; font-weight: bold; color: #409EFF; font-size: 18px; }
-.search-section { display: flex; align-items: center; }
-.package-input { width: 450px; }
+.app-info { display: flex; flex-direction: column; gap: 5px; }
+.pkg-name { font-family: monospace; font-size: 13px; color: #303133; font-weight: bold; word-break: break-all; }
 
-.card-header { display: flex; justify-content: space-between; align-items: center; }
+.media-container { display: flex; gap: 15px; align-items: flex-start; padding: 10px 0; }
+.img-icon { width: 60px; height: 60px; border-radius: 12px; flex-shrink: 0; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+.screenshot-strip { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; }
+.img-screenshot { width: 100px; height: 180px; border-radius: 6px; flex-shrink: 0; border: 1px solid #ebeef5; cursor: pointer; transition: transform 0.2s; }
+.img-screenshot:hover { transform: scale(1.05); }
 
-.app-info { display: flex; flex-direction: column; gap: 6px; }
-.pkg-name { font-family: monospace; font-weight: bold; font-size: 13px; color: #333; }
-.tags { display: flex; gap: 4px; }
-
-/* 资源预览样式 */
-.media-container {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 8px 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.media-item { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; }
-
-.img-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 14px;
-  border: 1px solid #ebeef5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.img-screenshot {
-  width: 110px;
-  height: 200px;
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-}
-
-.img-label { font-size: 11px; color: #999; margin-top: 5px; font-weight: bold; }
-
-.status-error { padding: 10px; }
-.status-loading { padding: 20px; width: 300px; }
-
-/* 自定义滚动条 */
-.media-container::-webkit-scrollbar { height: 6px; }
-.media-container::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+.compare-grid { display: flex; gap: 20px; overflow-x: auto; margin-top: 20px; padding-bottom: 20px; }
+.compare-column { width: 260px; flex-shrink: 0; background: #fafafa; border: 1px solid #ebeef5; border-radius: 8px; padding: 15px; }
+.column-title { text-align: center; font-weight: bold; margin-bottom: 15px; color: #606266; }
+.compare-icon { width: 80px; height: 80px; border-radius: 15px; display: block; margin: 0 auto; }
+.compare-ss { width: 100%; height: 350px; border-radius: 8px; margin-top: 10px; }
 </style>

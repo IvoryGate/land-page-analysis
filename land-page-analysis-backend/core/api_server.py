@@ -6,6 +6,7 @@
 """
 from flask import Blueprint, request, jsonify
 from core.task_service import TaskService
+import pycountry
 
 api_bp = Blueprint('api', __name__)
 
@@ -40,6 +41,16 @@ def get_image_urls():
         "task_id": task_id,
         "images": images
     }), 200
+
+@api_bp.route('/compare', methods=['POST'])
+def fetch_all_localization():
+    package = request.json.get('package')
+    platform = request.json.get('platform')
+    if not package or not platform:
+        return jsonify({"error": "Missing params"}), 400
+    
+    # images, task_id = task_service.get_all_localization()
+    return {}
 
 # @api_bp.route('/api/crawl', methods=['POST'])
 # def add_crawl_task():

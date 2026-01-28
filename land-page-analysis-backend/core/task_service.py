@@ -22,3 +22,6 @@ class TaskService:
         except Exception as e:
             self.db.update_task_status(task_id, 'failed', error_log=str(e))
             raise e
+        
+    def get_all_localization(self):
+        pass
