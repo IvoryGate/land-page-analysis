@@ -82,7 +82,7 @@
         </el-table>
       </div>
     </el-main>
-    <el-footer class="footer">
+    <el-footer class="footer" height="60px">
       <p>Copyright © 2026 - present IvoryGate. All Rights Reserved.</p>
     </el-footer>
   </el-container>
@@ -183,5 +183,6 @@ const handleSingleResponse = (data, originForm) => {
 .screenshot-strip { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px; }
 .img-screenshot { height: 180px; border-radius: 6px; flex-shrink: 0; border: 1px solid #ebeef5; cursor: pointer; transition: transform 0.2s; }
 .img-screenshot:hover { transform: scale(1.05); }
+
 </style>
 
