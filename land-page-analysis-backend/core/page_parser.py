@@ -1,6 +1,7 @@
 from config import Config
 from bs4 import BeautifulSoup
 import requests
+import re
 
 class RequestResult:
     icon: str
@@ -54,16 +55,23 @@ def parse_apple_store(package_id: str, region: str, lang: str) -> dict:
 
         soup = BeautifulSoup(response.text, 'lxml')
 
-        icon_tag = soup.select('div.app-icon-contianer source')
-        icon_url = icon_tag[0]["srcset"].split(" ")[0]
+        icon_tag = soup.select_one('div.app-icon-contianer source')
+        icon_url = icon_tag["srcset"].split(" ")[0] if icon_tag else ""
 
-        img_tags = soup.select('#product_media_phone_ source')
-        images: list[str] = []
-        for tag in img_tags:
-            images.append(tag["srcset"].split(" ")[0])
-
-        print(images)
+        img_sources = soup.select('#product_media_phone_ source')
+        images = []
         
+        if img_sources:
+            all_data = [{"url": s["srcset"].split(" ")[0], "type": s.get("type", "")} for s in img_sources]
+            
+            webp_list = [d["url"] for d in all_data if "webp" in d["type"]]
+            
+            if webp_list:
+                images = webp_list
+            else:
+                first_type = all_data[0]["type"]
+                images = [d["url"] for d in all_data if d["type"] == first_type]
+
         return {"icon": icon_url, "others": images}
     except Exception as e:
         raise Exception(f"AppStore解析失败: {str(e)}")
