@@ -8,15 +8,15 @@ class Config:
 
     # 数据库配置
     HOST: str | None = os.getenv("HOST")
-    PORT: int | None = os.getenv("PORT")
+    PORT: int | None = int(os.getenv("PORT"))
     USR: str | None = os.getenv("USR")
     PASSWORD: str | None = os.getenv("PASSWORD")
     DATABASE: str | None = os.getenv("DATABASE")
     CHARSET: str | None = os.getenv("CHARSET")
 
     # --- 爬虫配置信息 ---
-    CRAWLER_MAX_WORKERS: int = os.getenv("CRAWLER_MAX_WORKERS")
-    CRAWLER_TIMEOUT: int = os.getenv("CRAWLER_TIMEOUT")
+    CRAWLER_MAX_WORKERS: int = int(os.getenv("CRAWLER_MAX_WORKERS"))
+    CRAWLER_TIMEOUT: int = int(os.getenv("CRAWLER_TIMEOUT"))
     
     # HEADERS: dict | None = {
     #     'User-Agent': os.getenv('USER_AGENT')

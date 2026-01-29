@@ -61,6 +61,8 @@ def parse_apple_store(package_id: str, region: str, lang: str) -> dict:
         images: list[str] = []
         for tag in img_tags:
             images.append(tag["srcset"].split(" ")[0])
+
+        print(images)
         
         return {"icon": icon_url, "others": images}
     except Exception as e:
