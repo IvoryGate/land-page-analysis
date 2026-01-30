@@ -1,6 +1,8 @@
-from core.crawler_engine import CrawlerEngine
+from concurrent.futures import as_completed
+from core import CrawlerEngine
 from core import DBManager
-
+from config import Config
+import pycountry
 
 class TaskService:
     def __init__(self) -> None:
@@ -21,7 +23,15 @@ class TaskService:
             return self.db.get_task_images_list(task_id), task_id
         except Exception as e:
             self.db.update_task_status(task_id, 'failed', error_log=str(e))
-            raise e
+            return ({},task_id)
+
+    def get_all_localization(self, package: str, platform: str):
+        yield_list = []
+        for country in pycountry.countries:
+            region_code = country.alpha_2
+            native_lang = Config.COUNTRY_LANG_MAP.get(region_code, 'en')
+            task = self.engine.executor.submit(self.get_single_record, package, platform, region_code, native_lang)
+            yield_list.append(task)
         
-    def get_all_localization(self):
-        pass
+        for task in as_completed(yield_list):
+            yield task.result()

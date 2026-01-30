@@ -1,7 +1,6 @@
 from config import Config
 from bs4 import BeautifulSoup
 import requests
-import re
 
 class RequestResult:
     icon: str

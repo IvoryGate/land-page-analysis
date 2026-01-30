@@ -81,6 +81,29 @@
           </el-table-column>
         </el-table>
       </div>
+      <div v-if="viewMode === 'region_compare'">
+        <el-card class="search-card" shadow="never">
+          <el-form class="search-form" :inline="true" :model="form" >
+            <el-form-item label="包名">
+              <el-input 
+              v-model="form.package"
+              placeholder="com.example.app / 6636468266" 
+              style="width: 280px" 
+              @change = "autoChoosePlatform"
+              clearable/>
+            </el-form-item>
+            <el-form-item label="平台">
+              <el-select v-model="form.platform" style="width: 160px">
+                <el-option label="Google Play" value="google_play" />
+                <el-option label="App Store" value="apple_store" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="fetchAllRegion" :loading="submitting">查询</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </div>
     </el-main>
     <el-footer class="footer" height="60px">
       <p>Copyright © 2026 - present IvoryGate. All Rights Reserved.</p>
@@ -116,13 +139,11 @@ const autoChoosePlatform = (value) => {
   } else {
     form.platform = "google_play"
   }
-  console.log(`change platform to ${form.platform}`)
 }
 
 // 切换国家
 const handleRegionChange = (value) => {
   form.region = value
-  console.log(`current region is ${form.region}`)
 }
 
 // 提交请求
@@ -165,6 +186,8 @@ const handleSingleResponse = (data, originForm) => {
   console.log(taskList)
 
 }
+
+
 </script>
 
 <style>
