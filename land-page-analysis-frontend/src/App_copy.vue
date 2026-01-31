@@ -103,6 +103,47 @@
             </el-form-item>
           </el-form>
         </el-card>
+        <el-table :data="taskList" v-loading="loading" border class="task-list">
+          <el-table-column label="应用详情" width="240px">
+            <template #default="scope">
+              <div class="app-info">
+                <span class="pkg-name">{{ scope.row.package_name }}</span>
+                <div class="tags">
+                  <el-tag size="default" effect="dark">{{ scope.row.platform }}</el-tag>
+                  <el-tag size="default" type="info" style="margin-left: 5px">{{ scope.row.region.toUpperCase() }}</el-tag>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="素材预览">
+            <template #default="scope">
+              <div class="media-container" v-if="imageData[scope.row.id]">
+                <el-image 
+                class="img-icon"
+                v-if="imageData[scope.row.id].icon"
+                  :src="imageData[scope.row.id].icon"
+                  fit="cover"
+                  :preview-src-list="[imageData[scope.row.id].icon]"
+                  preview-teleported
+                />
+                <div class="screenshot-strip">
+                  <el-image 
+                    v-for="(url, index) in imageData[scope.row.id].others" 
+                    :key="index" 
+                    :src="url" 
+                    class="img-screenshot"
+                    fit="cover"
+                    lazy
+                    :preview-src-list="imageData[scope.row.id].others"
+                    :initial-index="index"
+                    preview-teleported
+                    show-progress  
+                  />
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </el-main>
     <el-footer class="footer" height="60px">
