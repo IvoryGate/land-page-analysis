@@ -14,32 +14,71 @@
     <el-main>
       <div v-if="viewMode === 'task_board'">
         <el-card class="search-card" shadow="never">
-          <el-form class="search-form" :inline="true" :model="form" >
-            <el-form-item label="包名">
-              <el-input 
-              v-model="form.package"
-              placeholder="com.example.app / 6636468266" 
-              style="width: 280px" 
-              @change = "autoChoosePlatform"
-              clearable/>
-            </el-form-item>
-            <el-form-item label="平台">
-              <el-select v-model="form.platform" style="width: 160px">
-                <el-option label="Google Play" value="google_play" />
-                <el-option label="App Store" value="apple_store" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="地区">
-              <el-select v-model="form.region" @change="handleRegionChange" style="width: 160px">
-                <el-option v-for="(item, region) in regionMap" :key="region" :label="item.label" :value="region" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="fetchSingleRecord" :loading="submitting">查询</el-button>
-            </el-form-item>
+          <el-form class="search-form" :inline="true" :model="form" label-width="auto">
+            <div class="form-row">
+              <el-form-item label="包名">
+                <el-input 
+                  v-model="form.package"
+                  placeholder="com.example.app" 
+                  style="width: 280px" 
+                  @change="autoChoosePlatform"
+                  clearable
+                />
+              </el-form-item>
+              <el-form-item label="平台">
+                <el-select v-model="form.platform" style="width: 160px">
+                  <el-option label="Google Play" value="google_play" />
+                  <el-option label="App Store" value="apple_store" />
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="viewMode === 'task_board'" label="地区">
+                <el-select 
+                  v-model="form.region" 
+                  placeholder="搜索地区代码"
+                  filterable 
+                  style="width: 160px"
+                >
+                  <el-option 
+                    v-for="(item, key) in regionMap" 
+                    :key="key" 
+                    :label="item.label" 
+                    :value="key" 
+                  />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="viewMode === 'task_board' ? fetchSingleRecord() : fetchAllRegion()" :loading="submitting">
+                  {{ viewMode === 'task_board' ? '立即查询' : '同步全地区' }}
+                </el-button>
+              </el-form-item>
+            </div>
+            <div class="form-row filter-row">
+              <el-form-item label="筛选包名">
+                <el-input 
+                  v-model="filterCriteria.package" 
+                  placeholder="在结果中过滤包名" 
+                  style="width: 280px" 
+                  clearable
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item label="筛选地区">
+                <el-input 
+                  v-model="filterCriteria.region" 
+                  placeholder="输入地区代码 (如: US)" 
+                  style="width: 160px" 
+                  clearable 
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-text type="info" style="margin-left: 10px">
+                  匹配项: {{ viewMode === 'task_board' ? filteredTaskList.length : filteredRegionTaskList.length }}
+                </el-text>
+              </el-form-item>
+            </div>
           </el-form>
         </el-card>
-        <el-table :data="taskList" v-loading="loading" border class="task-list" row-key="id">
+        <el-table :data="filteredTaskList" v-loading="loading" border class="task-list" row-key="id">
           <el-table-column label="应用详情" width="240px">
             <template #default="scope">
               <div class="app-info">
@@ -83,27 +122,61 @@
       </div>
       <div v-if="viewMode === 'region_compare'">
         <el-card class="search-card" shadow="never">
-          <el-form class="search-form" :inline="true" :model="form" >
-            <el-form-item label="包名">
-              <el-input 
-              v-model="form.package"
-              placeholder="com.example.app / 6636468266" 
-              style="width: 280px" 
-              @change = "autoChoosePlatform"
-              clearable/>
-            </el-form-item>
-            <el-form-item label="平台">
-              <el-select v-model="form.platform" style="width: 160px">
-                <el-option label="Google Play" value="google_play" />
-                <el-option label="App Store" value="apple_store" />
-              </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="fetchAllRegion" :loading="submitting">查询</el-button>
-            </el-form-item>
+          <el-form class="search-form" :inline="true" :model="form" label-width="auto">
+            <div class="form-row">
+              <el-form-item label="包名">
+                <el-input 
+                  v-model="form.package"
+                  placeholder="com.example.app" 
+                  style="width: 280px" 
+                  @change="autoChoosePlatform"
+                  clearable
+                />
+              </el-form-item>
+              <el-form-item label="平台">
+                <el-select v-model="form.platform" style="width: 160px">
+                  <el-option label="Google Play" value="google_play" />
+                  <el-option label="App Store" value="apple_store" />
+                </el-select>
+              </el-form-item>
+              <el-form-item v-if="viewMode === 'task_board'" label="地区">
+                <el-select v-model="form.region" style="width: 160px">
+                  <el-option v-for="(item, region) in regionMap" :key="region" :label="item.label" :value="region" />
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" @click="viewMode === 'task_board' ? fetchSingleRecord() : fetchAllRegion()" :loading="submitting">
+                  {{ viewMode === 'task_board' ? '立即查询' : '同步全地区' }}
+                </el-button>
+              </el-form-item>
+            </div>
+            <div class="form-row filter-row">
+              <el-form-item label="筛选包名">
+                <el-input 
+                  v-model="filterCriteria.package" 
+                  placeholder="在结果中过滤包名" 
+                  style="width: 280px" 
+                  clearable
+                >
+                </el-input>
+              </el-form-item>
+              <el-form-item label="筛选地区">
+                <el-input 
+                  v-model="filterCriteria.region" 
+                  placeholder="输入地区代码 (如: US)" 
+                  style="width: 160px" 
+                  clearable 
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-text type="info" style="margin-left: 10px">
+                  匹配项: {{ viewMode === 'task_board' ? filteredTaskList.length : filteredRegionTaskList.length }}
+                </el-text>
+              </el-form-item>
+            </div>
           </el-form>
         </el-card>
-        <el-table :data="regionTaskList" v-loading="loading" border class="task-list" row-key="id">
+        <el-table :data="filteredRegionTaskList" v-loading="loading" border class="task-list" row-key="id">
           <el-table-column label="应用详情" width="240px">
             <template #default="scope">
               <div class="app-info">
@@ -155,7 +228,7 @@
 <script setup>
 import { Monitor } from '@element-plus/icons-vue';
 import axios from 'axios';
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { watch } from 'vue'
 
 // ---- 状态变量 -----
@@ -169,11 +242,47 @@ const regionImageData = reactive({})  // 纯放用于渲染分地区的素材列
 
 const form = reactive({ package: '', platform: 'google_play', region: 'us', lang: 'en' })
 
-const regionMap = {
-  us: { label: '美国 (US)', lang: 'en' },
-  cn: { label: '中国 (CN)', lang: 'zh' }
-}
+const COUNTRY_LANG_MAP = {
+  'CN': 'zh', 'TW': 'zh', 'HK': 'zh', 'US': 'en', 'GB': 'en', 'CA': 'en', 'AU': 'en', 'NZ': 'en',
+  'JP': 'ja', 'KR': 'ko', 'FR': 'fr', 'DE': 'de', 'IT': 'it', 'ES': 'es', 'BR': 'pt', 'PT': 'pt',
+  'RU': 'ru', 'IN': 'en', 'ID': 'id', 'TH': 'th', 'VN': 'vi', 'TR': 'tr', 'SA': 'ar', 'AE': 'ar',
+  // ... 其他所有 A-Z 数据 ...
+  'AD': 'ca', 'AF': 'fa', 'AG': 'en', 'AI': 'en', 'AL': 'sq', 'AM': 'hy', 'AO': 'pt', 'AQ': 'und', 
+  'AR': 'es', 'AS': 'sm', 'AT': 'de', 'AW': 'nl', 'AX': 'sv', 'AZ': 'az', 'BA': 'bs', 'BB': 'en', 
+  'BD': 'bn', 'BE': 'nl', 'BF': 'fr', 'BG': 'bg', 'BH': 'ar', 'BI': 'rn', 'BJ': 'fr', 'BL': 'fr', 
+  'BM': 'en', 'BN': 'ms', 'BO': 'es', 'BQ': 'nl', 'BS': 'en', 'BT': 'dz', 'BV': 'no', 'BW': 'en', 
+  'BY': 'be', 'BZ': 'en', 'CC': 'en', 'CD': 'fr', 'CF': 'fr', 'CG': 'fr', 'CH': 'de', 'CI': 'fr', 
+  'CK': 'en', 'CL': 'es', 'CM': 'fr', 'CO': 'es', 'CR': 'es', 'CU': 'es', 'CV': 'pt', 'CW': 'nl', 
+  'CX': 'en', 'CY': 'el', 'CZ': 'cs', 'DJ': 'fr', 'DK': 'da', 'DM': 'en', 'DO': 'es', 'DZ': 'ar',
+  'EC': 'es', 'EE': 'et', 'EG': 'ar', 'EH': 'ar', 'ER': 'ti', 'ET': 'am', 'FI': 'fi', 'FJ': 'en', 
+  'FK': 'en', 'FM': 'en', 'FO': 'fo', 'GA': 'fr', 'GD': 'en', 'GE': 'ka', 'GF': 'fr', 'GG': 'en', 
+  'GH': 'en', 'GI': 'en', 'GL': 'kl', 'GM': 'en', 'GN': 'fr', 'GP': 'fr', 'GQ': 'es', 'GR': 'el', 
+  'GS': 'en', 'GT': 'es', 'GU': 'en', 'GW': 'pt', 'GY': 'en', 'HM': 'en', 'HN': 'es', 'HR': 'hr', 
+  'HT': 'fr', 'HU': 'hu', 'IE': 'en', 'IL': 'he', 'IM': 'en', 'IO': 'en', 'IQ': 'ar', 'IR': 'fa', 
+  'IS': 'is', 'JE': 'en', 'JM': 'en', 'JO': 'ar', 'KE': 'en', 'KG': 'ky', 'KH': 'km', 'KI': 'en', 
+  'KM': 'ar', 'KN': 'en', 'KW': 'ar', 'KY': 'en', 'KZ': 'ru', 'LA': 'lo', 'LB': 'ar', 'LC': 'en', 
+  'LI': 'de', 'LK': 'si', 'LR': 'en', 'LS': 'en', 'LT': 'lt', 'LU': 'fr', 'LV': 'lv', 'LY': 'ar',
+  'MA': 'ar', 'MC': 'fr', 'MD': 'ro', 'ME': 'sr', 'MF': 'fr', 'MG': 'mg', 'MH': 'en', 'MK': 'mk', 
+  'ML': 'fr', 'MM': 'my', 'MN': 'mn', 'MO': 'zh', 'MP': 'en', 'MQ': 'fr', 'MR': 'ar', 'MS': 'en', 
+  'MT': 'mt', 'MU': 'en', 'MV': 'dv', 'MW': 'en', 'MX': 'es', 'MY': 'en', 'MZ': 'pt', 'NA': 'en', 
+  'NC': 'fr', 'NE': 'fr', 'NF': 'en', 'NG': 'en', 'NI': 'es', 'NL': 'nl', 'NO': 'no', 'NP': 'ne', 
+  'NR': 'en', 'NU': 'en', 'OM': 'ar', 'PA': 'es', 'PE': 'es', 'PF': 'fr', 'PG': 'en', 'PH': 'en', 
+  'PK': 'en', 'PL': 'pl', 'PM': 'fr', 'PN': 'en', 'PR': 'es', 'PS': 'ar', 'PW': 'en', 'PY': 'es',
+  'QA': 'ar', 'RE': 'fr', 'RO': 'ro', 'RS': 'sr', 'RW': 'rw', 'SB': 'en', 'SC': 'fr', 'SD': 'ar', 
+  'SE': 'sv', 'SG': 'en', 'SH': 'en', 'SI': 'sl', 'SJ': 'no', 'SK': 'sk', 'SL': 'en', 'SM': 'it', 
+  'SN': 'fr', 'SO': 'so', 'SR': 'nl', 'SS': 'en', 'ST': 'pt', 'SV': 'es', 'SX': 'nl', 'SY': 'ar', 
+  'SZ': 'en', 'TC': 'en', 'TD': 'fr', 'TF': 'fr', 'TG': 'fr', 'TJ': 'tg', 'TK': 'en', 'TL': 'pt', 
+  'TM': 'tk', 'TN': 'ar', 'TO': 'to', 'TT': 'en', 'TV': 'en', 'TZ': 'sw', 'UA': 'uk', 'UG': 'en', 
+  'UM': 'en', 'UY': 'es', 'UZ': 'uz', 'VA': 'it', 'VC': 'en', 'VE': 'es', 'VG': 'en', 'VI': 'en', 
+  'VU': 'fr', 'WF': 'fr', 'WS': 'sm', 'YE': 'ar', 'YT': 'fr', 'ZA': 'en', 'ZM': 'en', 'ZW': 'en'
+};
 
+const regionMap = Object.fromEntries(
+  Object.entries(COUNTRY_LANG_MAP).map(([code, lang]) => [
+    code.toLowerCase(),
+    { label: `${code}`, lang: lang }
+  ])
+);
 // ---- 方法 ----
 
 // 根据包名自动推断平台
@@ -187,7 +296,8 @@ const autoChoosePlatform = (value) => {
 
 // 切换国家
 const handleRegionChange = (value) => {
-  form.region = value
+  form.region = value;
+  form.lang = regionMap[value].lang;
 }
 
 watch(viewMode, (newMode) => {
@@ -196,7 +306,7 @@ watch(viewMode, (newMode) => {
   loading.value = false;
   
   form.package = ''; 
-  
+
 })
 
 // 提交请求
@@ -315,6 +425,27 @@ const fetchAllRegion = async () => {
   }
 };
 
+const filterCriteria = reactive({
+  package: '',
+  region: ''
+})
+
+// 任务看板筛选逻辑
+const filteredTaskList = computed(() => {
+  return taskList.value.filter(item => {
+    return (item.package_name || '').toLowerCase().includes(filterCriteria.package.toLowerCase()) &&
+           (item.region || '').toLowerCase().includes(filterCriteria.region.toLowerCase())
+  })
+})
+
+// 地区对比筛选逻辑
+const filteredRegionTaskList = computed(() => {
+  return regionTaskList.value.filter(item => {
+    return (item.package_name || '').toLowerCase().includes(filterCriteria.package.toLowerCase()) &&
+           (item.region || '').toLowerCase().includes(filterCriteria.region.toLowerCase())
+  })
+})
+
 </script>
 
 <style>
@@ -334,5 +465,10 @@ const fetchAllRegion = async () => {
 .img-screenshot { height: 180px; border-radius: 6px; flex-shrink: 0; border: 1px solid #ebeef5; cursor: pointer; transition: transform 0.2s; }
 .img-screenshot:hover { transform: scale(1.05); }
 
+.form-row { display: flex; flex-wrap: wrap; align-items: center; }
+
+.filter-row { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ebeef5; }
+
+.search-form .el-form-item { margin-bottom: 0; margin-right: 20px; }
 </style>
 
