@@ -12,7 +12,7 @@ class TaskService:
     def get_single_record(self, package: str, platform: str, region: str, lang: str) -> tuple:
         existing_id = self.db.check_task_valid(package, platform, region, lang)
         if existing_id:
-            return self.db.get_task_images_list(existing_id), existing_id
+            return self.db.get_task_images_list(existing_id), existing_id, region
         task_id = self.db.create_task(package, platform, region, lang)
         try:
             self.db.update_task_status(task_id, 'running')
@@ -20,10 +20,10 @@ class TaskService:
             if processed_images:
                 self.db.add_images(task_id, processed_images)
             self.db.update_task_status(task_id, 'success')
-            return self.db.get_task_images_list(task_id), task_id
+            return self.db.get_task_images_list(task_id), task_id, region
         except Exception as e:
             self.db.update_task_status(task_id, 'failed', error_log=str(e))
-            return ({},task_id)
+            return ({},task_id, region)
 
     def get_all_localization(self, package: str, platform: str):
         yield_list = []

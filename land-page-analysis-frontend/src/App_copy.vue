@@ -39,7 +39,7 @@
             </el-form-item>
           </el-form>
         </el-card>
-        <el-table :data="taskList" v-loading="loading" border class="task-list">
+        <el-table :data="taskList" v-loading="loading" border class="task-list" row-key="id">
           <el-table-column label="应用详情" width="240px">
             <template #default="scope">
               <div class="app-info">
@@ -103,7 +103,7 @@
             </el-form-item>
           </el-form>
         </el-card>
-        <el-table :data="taskList" v-loading="loading" border class="task-list">
+        <el-table :data="regionTaskList" v-loading="loading" border class="task-list" row-key="id">
           <el-table-column label="应用详情" width="240px">
             <template #default="scope">
               <div class="app-info">
@@ -117,24 +117,24 @@
           </el-table-column>
           <el-table-column label="素材预览">
             <template #default="scope">
-              <div class="media-container" v-if="imageData[scope.row.id]">
+              <div class="media-container" v-if="regionImageData[scope.row.id]">
                 <el-image 
                 class="img-icon"
-                v-if="imageData[scope.row.id].icon"
-                  :src="imageData[scope.row.id].icon"
+                v-if="regionImageData[scope.row.id].icon"
+                  :src="regionImageData[scope.row.id].icon"
                   fit="cover"
-                  :preview-src-list="[imageData[scope.row.id].icon]"
+                  :preview-src-list="[regionImageData[scope.row.id].icon]"
                   preview-teleported
                 />
                 <div class="screenshot-strip">
                   <el-image 
-                    v-for="(url, index) in imageData[scope.row.id].others" 
+                    v-for="(url, index) in regionImageData[scope.row.id].others" 
                     :key="index" 
                     :src="url" 
                     class="img-screenshot"
                     fit="cover"
                     lazy
-                    :preview-src-list="imageData[scope.row.id].others"
+                    :preview-src-list="regionImageData[scope.row.id].others"
                     :initial-index="index"
                     preview-teleported
                     show-progress  
@@ -156,13 +156,16 @@
 import { Monitor } from '@element-plus/icons-vue';
 import axios from 'axios';
 import { ref, reactive } from 'vue'
+import { watch } from 'vue'
 
 // ---- 状态变量 -----
-const viewMode = ref('task_board')  // 当前渲染面板
-const submitting = ref(false)       // 查询按钮，点击后变成加载状体，避免重复提交
+const viewMode = ref('task_board')    // 当前渲染面板
+const submitting = ref(false)         // 查询按钮，点击后变成加载状体，避免重复提交
 const loading = ref(false)
-const taskList = ref([])            // 存放组织好的任务列表数据，用于渲染展示任务列
-const imageData = reactive({})      // 存放组织好的图片url数据，用于渲染素材列
+const taskList = ref([])              // 存放组织好的任务列表数据，用于渲染展示任务列
+const imageData = reactive({})        // 存放组织好的图片url数据，用于渲染素材列
+const regionTaskList = ref([])        // 存放用于构建分地区任务列表的任务列数据
+const regionImageData = reactive({})  // 纯放用于渲染分地区的素材列的数据
 
 const form = reactive({ package: '', platform: 'google_play', region: 'us', lang: 'en' })
 
@@ -187,6 +190,15 @@ const handleRegionChange = (value) => {
   form.region = value
 }
 
+watch(viewMode, (newMode) => {
+
+  submitting.value = false;
+  loading.value = false;
+  
+  form.package = ''; 
+  
+})
+
 // 提交请求
 const fetchSingleRecord = async () => {
   if (!form.package) return ElMessage.warning('包名缺失')
@@ -203,13 +215,13 @@ const fetchSingleRecord = async () => {
   }
 }
 
+// 处理单条数据
 const handleSingleResponse = (data, originForm) => {
   const taskId = data.task_id
   imageData[taskId] = {
     icon: data.images.find(i => i.type === 'icon')?.url,
     others: data.images.filter(i => i.type === 'other').map(i => i.url)
   }
-
   const taskEntry = {
     id: taskId,
     package_name: originForm.package,
@@ -223,11 +235,85 @@ const handleSingleResponse = (data, originForm) => {
   } else {
     taskList.value.unshift(taskEntry)
   }
-
-  console.log(taskList)
-
 }
 
+// 处理多条数据
+const handleMultipleResponse = (data, package_name, platform) => {
+  const taskId = data.task_id;
+  if(!taskId) return;
+  regionImageData[taskId] = {
+    icon: data.images.find(i => i.type === 'icon')?.url,
+    others: data.images.filter(i => i.type === 'other').map(i => i.url)
+  }
+  const taskEntry = {
+    id: taskId,
+    package_name: package_name,
+    platform: platform,
+    region: (data.region || 'Unknown').toUpperCase(),
+    status: data.status
+  };
+  const idx = regionTaskList.value.findIndex(t => t.id === taskId);
+  if (idx !== -1) {
+    regionTaskList.value[idx] = taskEntry;
+  } else {
+    regionTaskList.value.push(taskEntry);
+  }
+}
+
+const fetchAllRegion = async () => {
+  if (!form.package) return ElMessage.warning('包名缺失');
+
+  // 初始化状态
+  submitting.value = true;
+  loading.value = true;
+  regionTaskList.value = [];
+
+  try {
+    const response = await fetch('/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        package: form.package,
+        platform: form.platform
+      })
+    });
+
+    if (!response.body) throw new Error('ReadableStream not supported');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      if (loading.value) loading.value = false;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let lines = buffer.split('\n');
+
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const data = JSON.parse(line);
+
+          handleMultipleResponse(data, form.package, form.platform);
+        } catch (e) {
+          console.error("解析流式JSON失败", e);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("获取流数据失败", error);
+    ElMessage.error('地区对比请求失败');
+  } finally {
+    submitting.value = false;
+    loading.value = false;
+  }
+};
 
 </script>
 

@@ -35,11 +35,12 @@ def get_image_urls():
     lang = request.json.get('lang', 'en').lower()
     if not package or not platform:
         return jsonify({"error": "Missing params"}), 400
-    images,task_id = task_service.get_single_record(package, platform, region, lang)
+    images,task_id,region = task_service.get_single_record(package, platform, region, lang)
     return jsonify({
         "status": "success",
         "task_id": task_id,
-        "images": images
+        "images": images,
+        "region": region
     }), 200
 
 @api_bp.route('/compare', methods=['POST'])
@@ -50,12 +51,12 @@ def fetch_all_localization():
         return jsonify({"error": "Missing params"}), 400
     def generate():
         stream = task_service.get_all_localization(package, platform)
-        print(stream)
-        for images,task_id in stream:
+        for images,task_id,region in stream:
             yield json.dumps({
                 "status": "success",
                 "task_id": task_id,
-                "images": images
+                "images": images,
+                "region": region
             }) + "\n"
 
     return Response(
