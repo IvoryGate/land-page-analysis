@@ -16,7 +16,15 @@
         <el-form class="search-form" :inline="true" :model="form" label-width="80px">
           <div class="form-row">
             <el-form-item label="包名">
-              <el-input v-model="form.package" placeholder="com.example.app" style="width: 250px" @change="autoChoosePlatform" clearable />
+              <el-autocomplete
+                v-model="form.package"
+                :fetch-suggestions="querySearchHistory"
+                placeholder="com.example.app"
+                style="width: 280px"
+                clearable
+                @select="handleHistorySelect"
+                @input="autoChoosePlatform"
+              />
             </el-form-item>
             <el-form-item label="平台">
               <el-select v-model="form.platform" style="width: 140px">
@@ -30,7 +38,7 @@
               </el-select>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="viewMode === 'task_board' ? fetchSingleRecord() : fetchAllRegion()" :loading="submitting">
+              <el-button type="primary" @click="handleMainSearch" :loading="submitting">
                 {{ viewMode === 'task_board' ? '立即查询' : '同步全地区' }}
               </el-button>
             </el-form-item>
@@ -43,15 +51,8 @@
             <el-form-item label="筛选地区">
               <el-select
                 v-model="filterCriteria.region"
-                multiple
-                filterable
-                collapse-tags
-                collapse-tags-tooltip
-                :max-collapse-tags="4"
-                placeholder="全部地区"
-                style="width: 380px"
-                clearable
-                class="filter-region-select"
+                multiple filterable collapse-tags collapse-tags-tooltip :max-collapse-tags="4"
+                placeholder="全部地区" style="width: 380px" clearable class="filter-region-select"
               >
                 <el-option v-for="(item, key) in regionMap" :key="key" :label="item.label" :value="key" />
               </el-select>
@@ -63,13 +64,7 @@
         </el-form>
       </el-card>
 
-      <el-table 
-        :data="currentDisplayData" 
-        v-loading="loading" 
-        border 
-        row-key="id"
-        class="task-list"
-      >
+      <el-table :data="currentDisplayData" v-loading="loading" border row-key="id" class="task-list">
         <el-table-column label="应用详情" width="240px">
           <template #default="scope">
             <div class="app-info">
@@ -81,53 +76,55 @@
             </div>
           </template>
         </el-table-column>
-        
         <el-table-column label="素材预览">
           <template #default="scope">
             <div class="media-container" v-if="getCurrentImageData(scope.row.id)">
               <el-image 
-                class="img-icon"
-                v-if="getCurrentImageData(scope.row.id).icon"
-                :src="getCurrentImageData(scope.row.id).icon"
-                fit="cover"
-                :preview-src-list="[getCurrentImageData(scope.row.id).icon]"
+                class="img-icon" 
+                v-if="getCurrentImageData(scope.row.id).icon" 
+                :src="getCurrentImageData(scope.row.id).icon" 
+                fit="cover" 
+                :preview-src-list="[getCurrentImageData(scope.row.id).icon]" 
                 preview-teleported
+                referrerpolicy="no-referrer"
               />
               <div class="screenshot-strip">
                 <el-image 
                   v-for="(url, index) in getCurrentImageData(scope.row.id).others" 
-                  :key="index" :src="url" 
-                  class="img-screenshot" fit="cover" lazy
-                  :preview-src-list="getCurrentImageData(scope.row.id).others"
-                  :initial-index="index" preview-teleported
+                  :key="index" 
+                  :src="url" 
+                  class="img-screenshot" 
+                  fit="cover" 
+                  lazy 
+                  :preview-src-list="getCurrentImageData(scope.row.id).others" 
+                  :initial-index="index" 
+                  preview-teleported
+                  referrerpolicy="no-referrer"
                 />
               </div>
             </div>
           </template>
         </el-table-column>
-
         <template #empty>
           <el-empty :description="taskList.length || regionTaskList.length ? '没有匹配的筛选结果' : '暂无数据，请先执行查询'" />
         </template>
       </el-table>
     </el-main>
-
-    <el-footer class="footer" height="60px">
-      <p>Copyright © 2026 - present IvoryGate. All Rights Reserved.</p>
-    </el-footer>
+    <el-footer class="footer" height="60px"><p>Copyright © 2026 - present IvoryGate. All Rights Reserved.</p></el-footer>
   </el-container>
 </template>
 
 <script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { Monitor } from '@element-plus/icons-vue';
 import axios from 'axios';
-import { ref, reactive, computed, watch } from 'vue';
 
-// ---- 基础数据 (COUNTRY_LANG_MAP 保持不变) ----
+
 const COUNTRY_LANG_MAP = {
   'CN': 'zh', 'TW': 'zh', 'HK': 'zh', 'US': 'en', 'GB': 'en', 'CA': 'en', 'AU': 'en', 'NZ': 'en',
   'JP': 'ja', 'KR': 'ko', 'FR': 'fr', 'DE': 'de', 'IT': 'it', 'ES': 'es', 'BR': 'pt', 'PT': 'pt',
   'RU': 'ru', 'IN': 'en', 'ID': 'id', 'TH': 'th', 'VN': 'vi', 'TR': 'tr', 'SA': 'ar', 'AE': 'ar',
+  // ... 其他所有 A-Z 数据 ... 
   'AD': 'ca', 'AF': 'fa', 'AG': 'en', 'AI': 'en', 'AL': 'sq', 'AM': 'hy', 'AO': 'pt', 'AQ': 'und', 
   'AR': 'es', 'AS': 'sm', 'AT': 'de', 'AW': 'nl', 'AX': 'sv', 'AZ': 'az', 'BA': 'bs', 'BB': 'en', 
   'BD': 'bn', 'BE': 'nl', 'BF': 'fr', 'BG': 'bg', 'BH': 'ar', 'BI': 'rn', 'BJ': 'fr', 'BL': 'fr', 
@@ -160,12 +157,10 @@ const COUNTRY_LANG_MAP = {
 
 const regionMap = Object.fromEntries(
   Object.entries(COUNTRY_LANG_MAP).map(([code, lang]) => [
-    code.toLowerCase(),
-    { label: code, lang: lang }
+    code.toLowerCase(), { label: code, lang: lang }
   ])
 );
 
-// ---- 状态定义 ----
 const viewMode = ref('task_board');
 const submitting = ref(false);
 const loading = ref(false);
@@ -175,8 +170,41 @@ const taskList = ref([]);
 const imageData = reactive({});
 const regionTaskList = ref([]);
 const regionImageData = reactive({});
+const searchHistory = ref([]);
 
-// ---- 逻辑处理 ----
+onMounted(async () => {
+  try {
+    const { data } = await axios.get('/api/history');
+    searchHistory.value = data.map(v => ({ value: v }));
+  } catch (e) { console.error("History load error", e); }
+});
+
+const querySearchHistory = (queryString, cb) => {
+  const results = queryString 
+    ? searchHistory.value.filter(h => h.value.toLowerCase().includes(queryString.toLowerCase()))
+    : searchHistory.value;
+  cb(results);
+};
+
+const handleHistorySelect = (item) => {
+  form.package = item.value;
+  autoChoosePlatform(item.value);
+};
+
+const updateHistory = async (pkg) => {
+  if (!pkg) return;
+  try {
+    const { data } = await axios.post('/api/history', { package: pkg });
+    searchHistory.value = data.map(v => ({ value: v }));
+  } catch (e) { console.warn("Update history failed"); }
+};
+
+const handleMainSearch = async () => {
+  if (!form.package) return;
+  updateHistory(form.package);
+  viewMode.value === 'task_board' ? fetchSingleRecord() : fetchAllRegion();
+};
+
 const currentDisplayData = computed(() => {
   const source = viewMode.value === 'task_board' ? taskList.value : regionTaskList.value;
   return source.filter(item => {
@@ -185,28 +213,15 @@ const currentDisplayData = computed(() => {
     return matchPkg && matchReg;
   });
 });
-
 const getCurrentImageData = (id) => viewMode.value === 'task_board' ? imageData[id] : regionImageData[id];
-
 const autoChoosePlatform = (v) => form.platform = /^\d/.test(v) ? "apple_store" : "google_play";
 const handleRegionChange = (v) => form.lang = regionMap[v]?.lang || 'en';
 
-watch(viewMode, () => {
-  submitting.value = false;
-  loading.value = false;
-  filterCriteria.package = '';
-  filterCriteria.region = [];
-});
-
 const fetchSingleRecord = async () => {
-  if (!form.package) return;
   submitting.value = true; loading.value = true;
   try {
     const { data } = await axios.post('/api/get', { ...form });
-    imageData[data.task_id] = {
-      icon: data.images.find(i => i.type === 'icon')?.url,
-      others: data.images.filter(i => i.type === 'other').map(i => i.url)
-    };
+    imageData[data.task_id] = { icon: data.images.find(i => i.type === 'icon')?.url, others: data.images.filter(i => i.type === 'other').map(i => i.url) };
     const entry = { id: data.task_id, package_name: form.package, platform: form.platform, region: form.region, status: data.status };
     const idx = taskList.value.findIndex(t => t.id === data.task_id);
     if (idx !== -1) taskList.value[idx] = entry; else taskList.value.unshift(entry);
@@ -214,27 +229,18 @@ const fetchSingleRecord = async () => {
 };
 
 const fetchAllRegion = async () => {
-  if (!form.package) return;
   submitting.value = true; loading.value = true; regionTaskList.value = [];
   try {
     const res = await fetch('/api/compare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ package: form.package, platform: form.platform }) });
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buf = '';
+    const reader = res.body.getReader(); const decoder = new TextDecoder(); let buf = '';
     while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      loading.value = false;
-      buf += decoder.decode(value, { stream: true });
-      let lines = buf.split('\n');
-      buf = lines.pop();
+      const { value, done } = await reader.read(); if (done) break;
+      loading.value = false; buf += decoder.decode(value, { stream: true });
+      let lines = buf.split('\n'); buf = lines.pop();
       for (const line of lines) {
         if (!line.trim()) continue;
         const data = JSON.parse(line);
-        regionImageData[data.task_id] = {
-          icon: data.images.find(i => i.type === 'icon')?.url,
-          others: data.images.filter(i => i.type === 'other').map(i => i.url)
-        };
+        regionImageData[data.task_id] = { icon: data.images.find(i => i.type === 'icon')?.url, others: data.images.filter(i => i.type === 'other').map(i => i.url) };
         regionTaskList.value.push({ id: data.task_id, package_name: form.package, platform: form.platform, region: (data.region || '').toLowerCase(), status: data.status });
       }
     }
