@@ -87,6 +87,8 @@
                 :preview-src-list="[getCurrentImageData(scope.row.id).icon]" 
                 preview-teleported
                 referrerpolicy="no-referrer"
+                hide-on-click-modal
+                show-progress
               />
               <div class="screenshot-strip">
                 <el-image 
@@ -100,6 +102,8 @@
                   :initial-index="index" 
                   preview-teleported
                   referrerpolicy="no-referrer"
+                  hide-on-click-modal
+                  show-progress
                 />
               </div>
             </div>
