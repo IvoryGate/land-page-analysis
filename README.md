@@ -75,13 +75,45 @@
 本项目采用前后端分离的**生产级架构**，确保了高并发场景下的稳定性。
 
 ```mermaid
-graph LR
-    A[Vue3 Frontend] -- REST API --> B[Flask Server]
-    B -- Query/Check --> C[(MySQL DB)]
-    B -- Execute Task --> D[Crawler Engine]
-    D -- Parse --> E[Google/Apple Store]
-    E -- Result --> D
-    D -- Persist --> C
+graph TB
+    subgraph Client_Layer [Frontend: Vue 3 + Element Plus]
+        UI[View Layer: App.vue]
+        SC[Stream Consumer: Fetch/ReadableStream]
+    end
+
+    subgraph API_Gateway [API Layer: Flask Server]
+        AS[api_server.py]
+    end
+
+    subgraph Logic_Layer [Service Layer: Task Orchestration]
+        TS[task_service.py]
+        HIS[(search_history.json)]
+    end
+
+    subgraph Data_Layer [Persistence & Execution]
+        DB[(MySQL DB: Tasks/Images)]
+        CE[Crawler Engine: ThreadPoolExecutor]
+        PP[Page Parser: BeautifulSoup4]
+    end
+
+    %% Interaction Flow
+    UI -- 1. Submit Package --> AS
+    AS -- 2. Delegate --> TS
+    TS -- 3. Check Cache --> DB
+    TS -- 4. Read/Update --> HIS
+    
+    TS -- 5. Dispatch if Miss --> CE
+    CE -- 6. Multi-threaded Request --> PP
+    PP -- 7. Scraping --> STO[Google Play / App Store]
+    
+    STO -- 8. Raw HTML --> PP
+    PP -- 9. HD Image Links --> CE
+    CE -- 10. Persist Result --> DB
+    
+    %% Streaming Path
+    TS -- 11. Yield Success Event --> AS
+    AS -- 12. NDJSON Stream Output --> SC
+    SC -- 13. Real-time Reactive Update --> UI
 ```
 
 <br />
@@ -194,9 +226,22 @@ npm run dev
 
 服务默认运行在 [http://localhost:5173](http://localhost:5173)
 
-7. 一键启动脚本
+7. 一键启动脚本（推荐使用）
 
+**Linux / macOS:** 
 
+```shell 
+chmod +x start.sh 
+./start.sh
+```
+
+**Windows**（暂时还没有写）
+
+```shell
+./start.ps1
+```
+
+**注意**：脚本首次启动会检查 `.env` 文件。如果不存在，会自动从 `.env.example` 复制。请根据实际情况修改 `.env` 中的数据库相关信息。
 
 ---
 
