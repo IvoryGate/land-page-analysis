@@ -13,13 +13,14 @@
     <img src="https://img.shields.io/badge/Element_Plus-latest-409EFF?style=for-the-badge&logo=element-plus&logoColor=white" />
     <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
   </p>
-
   <p align="center">
-    <a href="#-快速开始">快速开始</a> •
-    <a href="#-核心特性">核心特性</a> •
-    <a href="#-架构设计">架构设计</a> •
-    <a href="./tutorials/README.md">深度教程</a>
+    <a href="#快速开始">快速开始</a> •
+    <a href="#核心特性">核心特性</a> •
+    <a href="#架构设计">架构设计</a> •
+    <a href="./tutorials/project_design.md">详细信息</a> •
+    <a href="./tutorials/api_interface.md">接口文档</a>
   </p>
+
 </div>
 
 <br />
@@ -87,11 +88,113 @@ graph LR
 
 ## 快速开始
 
-- 克隆项目
-- 部署环境
-- 启动数据库
-- 启动后端服务器
-- 启动前端
+1. **克隆项目**
+
+```shell
+git clone https://github.com/IvoryGate/land-page-analysis.git
+```
+
+2. **环境准备**
+
+确保你的开发环境已安装以下组件：
+
+```shell
+mysql 9.6.0
+python 3.14.2
+node.js v24.11.1
+```
+
+3. **数据库配置**
+
+登录 MySQL 并创建一个新的数据库：
+
+```sql
+CREATE DATABASE land_page_analysis DEFAULT CHARACTER SET utf8mb4;
+```
+
+后端服务首次启动时，`DBManager` 将自动初始化 `tasks` 与 `images` 表结构。
+
+4. **后端部署**
+
+进入后端目录并创建虚拟环境：
+
+```shell
+cd land-page-analysis-backend
+python -m venv .myvenv
+```
+
+激活虚拟环境：
+
+```shell
+# Windows
+myvenv\Scripts\activate
+# Linux/macOS
+source myvenv/bin/activate
+```
+
+安装依赖：
+
+```shell
+pip install -r requirements.txt
+```
+
+配置环境变量：
+
+在`land-page-analysis-backend`目录下创建`.env`文件，参考`.env.example`配置数据库参数：
+```shell
+# --- 数据库配置信息 ---
+HOST = "127.0.0.1"
+PORT = 3306
+USR = "root"
+PASSWORD = "你的密码"
+DATABASE = "你的数据库名"
+CHARSET = "utf8mb4"
+
+# --- 爬虫配置信息 ---
+CRAWLER_MAX_WORKERS = 10
+CRAWLER_TIMEOUT = 10
+
+# --- Google Play Url 配置 ---
+GOOGLE_URL = https://play.google.com/store/apps/details?id={0}&hl={2}&gl={1}
+
+# --- Apple Store Url 配置 ---
+APPLE_URL = https://apps.apple.com/{1}/app/id{0}?l={2}
+```
+
+6. **启动Flask服务**
+
+```shell
+# Windows
+python app.py
+# Linux/macOS
+python3 app.py
+```
+
+服务默认运行在 [http://localhost:5050](http://localhost:5050)
+
+**前端部署**
+
+进入前端目录：
+
+```shell
+cd land-page-analysis-frontend
+```
+
+安装依赖：
+
+```shell
+npm install
+```
+
+启动开发服务器：
+
+```shell
+npm run dev
+```
+
+服务默认运行在 [http://localhost:5173](http://localhost:5173)
+
+7. 一键启动脚本
 
 
 
