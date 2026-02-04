@@ -4,6 +4,9 @@ __pycache__
 .vscode
 node_modules/
 
+logs/
+search_history.json
+
 logs
 *.log
 npm-debug.log*
